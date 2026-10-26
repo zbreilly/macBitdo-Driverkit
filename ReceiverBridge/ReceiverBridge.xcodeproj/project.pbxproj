@@ -1,0 +1,18 @@
+// !$*UTF8*$!
+{ archiveVersion = 1; classes = {}; objectVersion = 56; objects = {
+A00000000000000000000001 = {isa = PBXProject; buildConfigurationList = A00000000000000000000002; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; knownRegions = (en, Base); mainGroup = A00000000000000000000003; productRefGroup = A00000000000000000000004; projectDirPath = ""; targets = (A00000000000000000000005); };
+A00000000000000000000002 = {isa = XCConfigurationList; buildConfigurations = (A00000000000000000000006); defaultConfigurationIsVisible = 0; defaultConfigurationName = Debug; };
+A00000000000000000000003 = {isa = PBXGroup; children = (A00000000000000000000007,A00000000000000000000008,A00000000000000000000009,A0000000000000000000000F,A00000000000000000000004); sourceTree = "<group>"; };
+A00000000000000000000004 = {isa = PBXGroup; children = (A0000000000000000000000A); name = Products; sourceTree = "<group>"; };
+A00000000000000000000005 = {isa = PBXNativeTarget; buildConfigurationList = A0000000000000000000000B; buildPhases = (A0000000000000000000000C); buildRules = (); dependencies = (); name = ReceiverBridge; productName = ReceiverBridge; productReference = A0000000000000000000000A; productType = "com.apple.product-type.application"; };
+A00000000000000000000006 = {isa = XCBuildConfiguration; name = Debug; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; SDKROOT = macosx; MACOSX_DEPLOYMENT_TARGET = 13.0; CLANG_ENABLE_OBJC_ARC = YES; GCC_TREAT_WARNINGS_AS_ERRORS = YES; }; };
+A00000000000000000000007 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+A00000000000000000000008 = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ReceiverBridge.entitlements; sourceTree = "<group>"; };
+A00000000000000000000009 = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+A0000000000000000000000A = {isa = PBXFileReference; explicitFileType = wrapper.application; path = ReceiverBridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+A0000000000000000000000B = {isa = XCConfigurationList; buildConfigurations = (A0000000000000000000000D); defaultConfigurationIsVisible = 0; defaultConfigurationName = Debug; };
+A0000000000000000000000C = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A0000000000000000000000E); runOnlyForDeploymentPostprocessing = 0; };
+A0000000000000000000000D = {isa = XCBuildConfiguration; name = Debug; buildSettings = {PRODUCT_NAME = "$(TARGET_NAME)"; PRODUCT_BUNDLE_IDENTIFIER = com.zbreilly.ReceiverBridge; DEVELOPMENT_TEAM = B7MRCR9852; CODE_SIGN_STYLE = Automatic; CODE_SIGN_IDENTITY = "Apple Development"; CODE_SIGN_ENTITLEMENTS = ReceiverBridge.entitlements; INFOPLIST_FILE = Info.plist; ENABLE_APP_SANDBOX = NO; OTHER_LDFLAGS = ("-framework", Foundation,"-framework", IOKit,"-framework", IOUSBHost,"-framework", Security,"-framework", GameController,"-framework", AppKit); OTHER_CFLAGS = ("-Wall", "-Wextra", "-fblocks"); }; };
+A0000000000000000000000E = {isa = PBXBuildFile; fileRef = A00000000000000000000007; };
+A0000000000000000000000F = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Rumble.h; sourceTree = "<group>"; };
+}; rootObject = A00000000000000000000001; }

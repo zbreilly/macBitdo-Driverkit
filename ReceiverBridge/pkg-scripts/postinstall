@@ -1,0 +1,47 @@
+#!/bin/zsh
+set -eu
+umask 077
+if (( $(id -u) == 0 )); then
+    print -u2 'Install ReceiverBridge for the current user, without sudo.'; exit 1
+fi
+# Resolve the account's real home; Installer's environment is not assumed.
+home_record=$(/usr/bin/dscl . -read "/Users/$(id -un)" NFSHomeDirectory)
+target_home=${home_record#NFSHomeDirectory: }
+[[ $target_home == /* && -d $target_home ]] || { print -u2 'Cannot resolve home directory.'; exit 1; }
+support_dir="$target_home/Library/Application Support/ReceiverBridge"
+agent_dir="$target_home/Library/LaunchAgents"
+log_dir="$target_home/Library/Logs/ReceiverBridge"
+agent_file="$agent_dir/com.zbreilly.ReceiverBridge.agent.plist"
+job="gui/$(id -u)/com.zbreilly.ReceiverBridge.agent"
+[[ -x "$support_dir/ReceiverBridge.app/Contents/MacOS/ReceiverBridge" ]] || {
+    print -u2 'The app payload was not installed in the expected user home.'; exit 1
+}
+/usr/bin/codesign --verify --deep --strict "$support_dir/ReceiverBridge.app"
+/usr/bin/codesign --verify --deep --strict "$target_home/Applications/Moonlight for 8BitDo.app"
+mkdir -p "$agent_dir" "$log_dir"
+stage_dir=$(mktemp -d "$agent_dir/.receiverbridge.XXXXXX")
+trap '[[ ! -d "$stage_dir" ]] || /bin/rm -rf -- "$stage_dir"' EXIT
+plist_stage="$stage_dir/agent.plist"
+/usr/bin/plutil -create xml1 "$plist_stage"
+/usr/bin/plutil -insert Label -string com.zbreilly.ReceiverBridge.agent "$plist_stage"
+/usr/bin/plutil -insert ProgramArguments -json '[]' "$plist_stage"
+/usr/bin/plutil -insert ProgramArguments.0 -string "$support_dir/ReceiverBridge.app/Contents/MacOS/ReceiverBridge" "$plist_stage"
+/usr/bin/plutil -insert ProgramArguments.1 -string --service "$plist_stage"
+/usr/bin/plutil -insert RunAtLoad -bool YES "$plist_stage"
+/usr/bin/plutil -insert KeepAlive -bool YES "$plist_stage"
+/usr/bin/plutil -insert ThrottleInterval -integer 3 "$plist_stage"
+/usr/bin/plutil -insert ProcessType -string Interactive "$plist_stage"
+/usr/bin/plutil -insert LimitLoadToSessionType -string Aqua "$plist_stage"
+/usr/bin/plutil -insert ExitTimeOut -integer 5 "$plist_stage"
+/usr/bin/plutil -insert StandardOutPath -string "$log_dir/service.log" "$plist_stage"
+/usr/bin/plutil -insert StandardErrorPath -string "$log_dir/service.log" "$plist_stage"
+/usr/bin/plutil -lint "$plist_stage" >/dev/null
+if [[ -f "$agent_file" ]]; then
+    cp "$agent_file" "$support_dir/agent.previous-$(date +%Y%m%d-%H%M%S).plist"
+fi
+mv "$plist_stage" "$agent_file"
+chmod 600 "$agent_file"
+/bin/launchctl bootstrap "gui/$(id -u)" "$agent_file"
+/bin/launchctl kickstart "$job" 2>/dev/null || true
+print 'ReceiverBridge installed and registered for login startup.'
+print 'Use ~/Applications/Moonlight for 8BitDo.app when streaming.'

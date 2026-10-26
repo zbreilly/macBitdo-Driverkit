@@ -1,0 +1,13 @@
+.DS_Store
+xcuserdata/
+*.xcuserstate
+__pycache__/
+build/
+DerivedData/
+*.app/
+*.pkg
+*.zip
+*.provisionprofile
+*.mobileprovision
+*.p12
+/controller-work/

@@ -1,4 +1,4 @@
-# ReceiverBridge 1.1
+# macBitdo-Ultimate 1.1
 
 ReceiverBridge translates the 8BitDo Ultimate 2.4 GHz receiver's XInput USB
 reports (`2DC8:3106`) into a macOS virtual Xbox controller (`045E:02FD`). It

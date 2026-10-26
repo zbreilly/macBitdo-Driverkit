@@ -2,14 +2,16 @@
 """Build the signed local bridge and a self-contained per-user install package."""
 import argparse
 import pathlib
+import plistlib
 import shutil
 import subprocess
 import zipfile
 
 root = pathlib.Path(__file__).resolve().parent
+version = plistlib.loads((root / 'Info.plist').read_bytes())['CFBundleShortVersionString']
 parser = argparse.ArgumentParser()
-parser.add_argument('--output', type=pathlib.Path, default=pathlib.Path('/tmp/ReceiverBridge-1.1'))
-parser.add_argument('--derived-data', type=pathlib.Path, default=pathlib.Path('/tmp/ReceiverBridge-release-build'))
+parser.add_argument('--output', type=pathlib.Path, default=pathlib.Path(f'/tmp/macBitdo-Ultimate-{version}'))
+parser.add_argument('--derived-data', type=pathlib.Path, default=pathlib.Path('/tmp/macBitdo-Ultimate-build'))
 parser.add_argument('--team', help='Apple Developer team ID (overrides the Xcode project default)')
 parser.add_argument('--bundle-id', help='Provisioned App ID (overrides the Xcode project default)')
 parser.add_argument('--allow-provisioning-updates', action='store_true',

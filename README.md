@@ -1,4 +1,4 @@
-# ReceiverBridge
+# macBitdo-Ultimate
 
 Native macOS controller support for the **8BitDo Ultimate 2.4 GHz USB receiver**
 in XInput mode (`2DC8:3106`), including both body rumble motors.

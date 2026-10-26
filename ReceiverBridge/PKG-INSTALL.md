@@ -1,7 +1,7 @@
-# ReceiverBridge 1.1 — macOS Installer package
+# macBitdo-Ultimate 1.1 — macOS Installer package
 
 Quit Moonlight and other controller apps, then double-click
-**ReceiverBridge-1.1.pkg** and install for your user account. Do not use sudo
+**macBitdo-Ultimate-1.1.pkg** and install for your user account. Do not use sudo
 or a system-wide destination. The package installs one signed background app
 and registers login startup. Moonlight is not a prerequisite.
 

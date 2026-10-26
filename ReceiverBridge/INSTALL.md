@@ -1,4 +1,4 @@
-# ReceiverBridge 1.1 — ZIP installation
+# macBitdo-Ultimate 1.1 — ZIP installation
 
 Use this signed development build only on a Mac authorized by its provisioning
 profile. For a different Mac, rebuild with your own signing setup as described

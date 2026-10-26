@@ -1,4 +1,4 @@
-# Building ReceiverBridge
+# Building macBitdo-Ultimate
 
 These steps build the background app, assemble a manual-install release/ZIP,
 and create a `.pkg`. Run commands from the repository root unless stated
@@ -28,8 +28,8 @@ inside `/Applications/Moonlight.app` and therefore need that app installed.
 ## Toolchain and source
 
 ```sh
-git clone https://github.com/zbreilly/ReceiverBridge.git
-cd ReceiverBridge
+git clone https://github.com/zbreilly/macBitdo-Ultimate.git
+cd macBitdo-Ultimate
 xcodebuild -version
 xcrun --show-sdk-path
 python3 --version
@@ -80,14 +80,14 @@ xcodebuild -quiet \
   -project ReceiverBridge/ReceiverBridge.xcodeproj \
   -scheme ReceiverBridge -configuration Debug \
   -destination 'platform=macOS,arch=arm64' \
-  -derivedDataPath /tmp/ReceiverBridge-build \
+  -derivedDataPath /tmp/macBitdo-Ultimate-build \
   DEVELOPMENT_TEAM=YOUR_TEAM_ID \
   PRODUCT_BUNDLE_IDENTIFIER=com.example.ReceiverBridge \
   build
 
-/tmp/ReceiverBridge-build/Build/Products/Debug/ReceiverBridge.app/Contents/MacOS/ReceiverBridge --self-test
+/tmp/macBitdo-Ultimate-build/Build/Products/Debug/ReceiverBridge.app/Contents/MacOS/ReceiverBridge --self-test
 codesign --verify --deep --strict \
-  /tmp/ReceiverBridge-build/Build/Products/Debug/ReceiverBridge.app
+  /tmp/macBitdo-Ultimate-build/Build/Products/Debug/ReceiverBridge.app
 ```
 
 If you explicitly want Xcode to fetch signing assets, add
@@ -105,14 +105,14 @@ There is no download/install step for third-party dependencies.
 ```sh
 mkdir -p dist
 python3 ReceiverBridge/build_release.py \
-  --output "$PWD/dist/ReceiverBridge-1.1" \
-  --derived-data /tmp/ReceiverBridge-build \
+  --output "$PWD/dist/macBitdo-Ultimate-1.1" \
+  --derived-data /tmp/macBitdo-Ultimate-build \
   --team YOUR_TEAM_ID \
   --bundle-id com.example.ReceiverBridge
 
 python3 ReceiverBridge/build_pkg.py \
-  --release "$PWD/dist/ReceiverBridge-1.1" \
-  --output "$PWD/dist/ReceiverBridge-1.1.pkg"
+  --release "$PWD/dist/macBitdo-Ultimate-1.1" \
+  --output "$PWD/dist/macBitdo-Ultimate-1.1.pkg"
 ```
 
 `build_release.py` accepts `--allow-provisioning-updates` as an explicit opt-in.

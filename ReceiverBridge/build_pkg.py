@@ -9,12 +9,16 @@ import tempfile
 import xml.etree.ElementTree as ET
 import zipfile
 
+project = pathlib.Path(__file__).resolve().parent
+source_version = plistlib.loads((project / 'Info.plist').read_bytes())['CFBundleShortVersionString']
 p = argparse.ArgumentParser()
-p.add_argument('--release', type=pathlib.Path, default=pathlib.Path('/tmp/ReceiverBridge-1.1'))
-p.add_argument('--output', type=pathlib.Path, default=pathlib.Path('/tmp/ReceiverBridge-1.1.pkg'))
+p.add_argument('--release', type=pathlib.Path, default=pathlib.Path(f'/tmp/macBitdo-Ultimate-{source_version}'))
+p.add_argument('--output', type=pathlib.Path, help='Defaults to /tmp/macBitdo-Ultimate-<app-version>.pkg')
 args = p.parse_args()
 release = args.release.resolve()
-output = args.output.resolve()
+info = plistlib.loads((release / 'ReceiverBridge.app/Contents/Info.plist').read_bytes())
+version = info['CFBundleShortVersionString']
+output = (args.output or pathlib.Path(f'/tmp/macBitdo-Ultimate-{version}.pkg')).resolve()
 identifier = 'com.zbreilly.ReceiverBridge.installer'
 if output.exists():
     raise SystemExit(f'Refusing to overwrite existing package: {output}')
@@ -23,8 +27,6 @@ source = release / 'Source'
 if not (source / 'pkg-scripts/postinstall').is_file():
     raise SystemExit('Release source snapshot missing; run build_release.py first.')
 subprocess.run(['/usr/bin/codesign', '--verify', '--deep', '--strict', str(release / 'ReceiverBridge.app')], check=True)
-info = plistlib.loads((release / 'ReceiverBridge.app/Contents/Info.plist').read_bytes())
-version = info['CFBundleShortVersionString']
 profile = plistlib.loads(subprocess.run(
     ['/usr/bin/security', 'cms', '-D', '-i', str(release / 'ReceiverBridge.app/Contents/embedded.provisionprofile')],
     capture_output=True, check=True).stdout)
@@ -62,14 +64,14 @@ with tempfile.TemporaryDirectory(prefix='receiver-pkg-build-') as temporary:
         component['BundleHasStrictIdentifier'] = True
         component['BundleOverwriteAction'] = 'upgrade'
     component_plist.write_bytes(plistlib.dumps(components))
-    component_pkg = work / 'ReceiverBridge-component.pkg'
+    component_pkg = work / 'macBitdo-Ultimate-component.pkg'
     subprocess.run(['/usr/bin/pkgbuild', '--root', str(payload), '--component-plist', str(component_plist),
                     '--scripts', str(scripts), '--identifier', identifier, '--version', version,
                     '--install-location', '/', '--ownership', 'recommended', str(component_pkg)], check=True)
     resources = work / 'resources'
     resources.mkdir()
     (resources / 'welcome.html').write_text('''<!doctype html><html><body>
-<h1>ReceiverBridge</h1><p>8BitDo Ultimate 2.4 GHz receiver support for this Mac.</p>
+<h1>macBitdo-Ultimate</h1><p>8BitDo Ultimate 2.4 GHz receiver support for this Mac.</p>
 <p>Installs a silent background service with login startup and automatic USB
 reconnection. Open Moonlight and other controller-compatible apps normally.
 Input and both rumble motors retain the settings verified during testing.</p>
@@ -84,7 +86,7 @@ or another controller-compatible app normally. No separate launcher is needed.</
 <p>Status and Uninstall commands are in Library/Application Support/ReceiverBridge
 inside your home folder. This build's development profile expires {profile_expiry}.</p></body></html>''')
     distribution = ET.Element('installer-gui-script', {'minSpecVersion': '2'})
-    ET.SubElement(distribution, 'title').text = f'ReceiverBridge {version}'
+    ET.SubElement(distribution, 'title').text = f'macBitdo-Ultimate {version}'
     ET.SubElement(distribution, 'options', {'customize': 'never', 'require-scripts': 'true', 'hostArchitectures': 'arm64'})
     ET.SubElement(distribution, 'domains', {'enable_anywhere': 'false', 'enable_currentUserHome': 'true', 'enable_localSystem': 'false'})
     ET.SubElement(distribution, 'welcome', {'file': 'welcome.html', 'mime-type': 'text/html'})
@@ -100,7 +102,7 @@ function checkHost() {
 '''
     outline = ET.SubElement(distribution, 'choices-outline')
     ET.SubElement(outline, 'line', {'choice': 'bridge'})
-    choice = ET.SubElement(distribution, 'choice', {'id': 'bridge', 'visible': 'false', 'title': 'ReceiverBridge'})
+    choice = ET.SubElement(distribution, 'choice', {'id': 'bridge', 'visible': 'false', 'title': 'macBitdo-Ultimate'})
     ET.SubElement(choice, 'pkg-ref', {'id': identifier})
     ET.SubElement(distribution, 'pkg-ref', {'id': identifier, 'version': version, 'onConclusion': 'None'}).text = component_pkg.name
     dist_path = work / 'Distribution.xml'

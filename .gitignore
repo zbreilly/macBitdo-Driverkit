@@ -10,4 +10,7 @@ DerivedData/
 *.provisionprofile
 *.mobileprovision
 *.p12
+*.key
+*.pem
 /controller-work/
+/dist/

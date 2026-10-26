@@ -4,9 +4,6 @@ set -eu
 if (( $(id -u) == 0 )); then
     print -u2 'Install ReceiverBridge for the current user, without sudo.'; exit 1
 fi
-if [[ ! -d /Applications/Moonlight.app ]]; then
-    print -u2 'Moonlight must be installed in /Applications first.'; exit 1
-fi
 /bin/launchctl bootout "gui/$(id -u)/com.zbreilly.ReceiverBridge.agent" 2>/dev/null || true
 for bridge_pid in $(/usr/bin/pgrep -u "$(id -u)" -x ReceiverBridge || true); do
     /bin/kill -TERM "$bridge_pid" 2>/dev/null || true

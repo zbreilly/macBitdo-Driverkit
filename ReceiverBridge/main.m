@@ -19,11 +19,10 @@
 #include <sys/stat.h>
 #import <Security/SecTask.h>
 #import <GameController/GameController.h>
-#import <AppKit/AppKit.h>
 #include "Rumble.h"
 
 static volatile sig_atomic_t stopped;
-static BOOL sdlProbeRequested,moonlightLaunchRequested;
+static BOOL sdlProbeRequested;
 static BOOL sdlNativeProbeRequested;
 static BOOL rumbleTestRequested;
 static BOOL sdlRumbleTestRequested;
@@ -304,18 +303,6 @@ static void (*sdlPump)(void);
 static int16_t (*sdlAxis)(void *,int);
 static uint8_t (*sdlButton)(void *,int);
 static const char *(*sdlName)(void *);
-static void launchMoonlightNative(void) {
-    if([NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.moonlight-stream.Moonlight"].count){
-        puts("Moonlight already running; compatibility environment cannot be changed in place.");return;
-    }
-    NSWorkspaceOpenConfiguration *configuration=[NSWorkspaceOpenConfiguration configuration];
-    configuration.environment=@{@"SDL_JOYSTICK_HIDAPI_XBOX":@"0",@"SDL_JOYSTICK_MFI":@"1"};
-    [[NSWorkspace sharedWorkspace] openApplicationAtURL:[NSURL fileURLWithPath:@"/Applications/Moonlight.app"]
-        configuration:configuration completionHandler:^(NSRunningApplication *application,NSError *error){
-        if(error)printf("Moonlight compatibility launch failed: %s\n",error.description.UTF8String);
-        else printf("Moonlight native-backend launch OK; pid=%d\n",application.processIdentifier);
-    }];
-}
 static BOOL initSDLProbe(void) {
     sdlLibrary=dlopen("/Applications/Moonlight.app/Contents/Frameworks/libSDL2.dylib",RTLD_NOW|RTLD_LOCAL);
     if(!sdlLibrary){printf("Moonlight SDL load failed: %s\n",dlerror());return NO;}
@@ -499,7 +486,6 @@ int main(int argc,const char **argv) { @autoreleasepool {
         if(!strcmp(argv[i],"--service")){serviceMode=YES;continue;}
         if(!strcmp(argv[i],"--sdl-probe")){sdlProbeRequested=YES;continue;}
         if(!strcmp(argv[i],"--sdl-probe-native")){sdlProbeRequested=YES;sdlNativeProbeRequested=YES;continue;}
-        if(!strcmp(argv[i],"--moonlight-compat")){moonlightLaunchRequested=YES;continue;}
         if(!strcmp(argv[i],"--rumble-test")){rumbleTestRequested=YES;continue;}
         if(!strcmp(argv[i],"--sdl-rumble-test")){sdlProbeRequested=YES;sdlRumbleTestRequested=YES;continue;}
         if(!strcmp(argv[i],"--sdl-motor-test")){sdlProbeRequested=YES;sdlRumbleTestRequested=YES;motorChannelTestRequested=YES;continue;}
@@ -509,13 +495,13 @@ int main(int argc,const char **argv) { @autoreleasepool {
             continue;
         }
         if(!strncmp(argv[i],"-psn_",5))continue;
-        fprintf(stderr,"Unknown option: %s\nUsage: %s [--service | --self-test | --virtual-test | --sdl-probe | --sdl-probe-native | --moonlight-compat | --rumble-test | --sdl-rumble-test | --sdl-motor-test | --usb-motor-test]\n",argv[i],argv[0]);return 2;
+        fprintf(stderr,"Unknown option: %s\nUsage: %s [--service | --self-test | --virtual-test | --sdl-probe | --sdl-probe-native | --rumble-test | --sdl-rumble-test | --sdl-motor-test | --usb-motor-test]\n",argv[i],argv[0]);return 2;
     }
-    if(serviceMode&&(rumbleTestRequested||sdlProbeRequested||moonlightLaunchRequested)){
-        fputs("--service cannot be combined with diagnostic or Moonlight launch options.\n",stderr);return 2;
+    if(serviceMode&&(rumbleTestRequested||sdlProbeRequested)){
+        fputs("--service cannot be combined with diagnostic options.\n",stderr);return 2;
     }
-    if(rumbleTestRequested&&(sdlProbeRequested||moonlightLaunchRequested)){
-        fputs("--rumble-test cannot be combined with SDL/Moonlight options.\n",stderr);return 2;
+    if(rumbleTestRequested&&sdlProbeRequested){
+        fputs("--rumble-test cannot be combined with SDL options.\n",stderr);return 2;
     }
     signal(SIGINT,stop);signal(SIGTERM,stop);
     // One service instance per login session. A stale lock file is harmless:
@@ -537,7 +523,7 @@ int main(int argc,const char **argv) { @autoreleasepool {
     // launchd restarts us after USB removal or a failed open; this wait then
     // sleeps until the physical receiver reappears, without spinning/relaunching.
     if(serviceMode){
-        puts("ReceiverBridge 1.0: waiting for receiver 2dc8:3106.");
+        puts("ReceiverBridge 1.1: waiting for receiver 2dc8:3106.");
         while(!stopped){@autoreleasepool{
             CFMutableDictionaryRef waitingMatch=IOServiceMatching("IOUSBHostDevice");
             if(!waitingMatch){fputs("USB matching allocation failed.\n",stderr);return 1;}
@@ -551,7 +537,6 @@ int main(int argc,const char **argv) { @autoreleasepool {
     }
     if(!rumbleTestRequested&&!createVirtualDevice())return 1;
     if(sdlProbeRequested&&!initSDLProbe())return 1;
-    if(moonlightLaunchRequested)launchMoonlightNative();
     NSMutableDictionary *match=[@{@"IOProviderClass":@"IOUSBHostDevice",@"idVendor":@0x2dc8,@"idProduct":@0x3106} mutableCopy];
     io_service_t svc=IOServiceGetMatchingService(kIOMainPortDefault,(__bridge_retained CFDictionaryRef)match);
     if(!svc){puts("Receiver 2dc8:3106 absent. Keep it connected in its current XInput mode.");return 1;}
@@ -584,7 +569,7 @@ int main(int argc,const char **argv) { @autoreleasepool {
     NSMutableData *data=[interface ioDataWithCapacity:32 error:&e];
     if(!data){printf("Input buffer allocation failed: %s\n",e.description.UTF8String);[interface destroy];[device destroy];return 1;}
     puts(rumbleTestRequested?(motorChannelTestRequested?"Receiver motor-channel test: USB only; exits after 10 seconds.":"Receiver rumble test: USB only, no virtual controller or Moonlight; exits after 5 seconds."):
-        "ReceiverBridge 1.0: input and two-motor rumble active.");
+        "ReceiverBridge 1.1: input and two-motor rumble active.");
     setPlayerIndicator(interface);
     rumblePipe=[interface copyPipeWithAddress:0x02 error:&e];
     if(!rumblePipe){printf("Rumble output endpoint unavailable: %s\n",e.description.UTF8String);}

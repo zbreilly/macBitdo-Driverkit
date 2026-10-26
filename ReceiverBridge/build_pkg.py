@@ -9,25 +9,32 @@ import tempfile
 import xml.etree.ElementTree as ET
 import zipfile
 
-source = pathlib.Path(__file__).resolve().parent
 p = argparse.ArgumentParser()
-p.add_argument('--release', type=pathlib.Path, default=pathlib.Path('/tmp/ReceiverBridge-1.0'))
-p.add_argument('--output', type=pathlib.Path, default=pathlib.Path('/tmp/ReceiverBridge-1.0.pkg'))
+p.add_argument('--release', type=pathlib.Path, default=pathlib.Path('/tmp/ReceiverBridge-1.1'))
+p.add_argument('--output', type=pathlib.Path, default=pathlib.Path('/tmp/ReceiverBridge-1.1.pkg'))
 args = p.parse_args()
 release = args.release.resolve()
 output = args.output.resolve()
 identifier = 'com.zbreilly.ReceiverBridge.installer'
-for app in ('ReceiverBridge.app', 'Moonlight for 8BitDo.app'):
-    subprocess.run(['/usr/bin/codesign', '--verify', '--deep', '--strict', str(release / app)], check=True)
+if output.exists():
+    raise SystemExit(f'Refusing to overwrite existing package: {output}')
+# Package the source and install scripts captured alongside this signed build.
+source = release / 'Source'
+if not (source / 'pkg-scripts/postinstall').is_file():
+    raise SystemExit('Release source snapshot missing; run build_release.py first.')
+subprocess.run(['/usr/bin/codesign', '--verify', '--deep', '--strict', str(release / 'ReceiverBridge.app')], check=True)
+info = plistlib.loads((release / 'ReceiverBridge.app/Contents/Info.plist').read_bytes())
+version = info['CFBundleShortVersionString']
+profile = plistlib.loads(subprocess.run(
+    ['/usr/bin/security', 'cms', '-D', '-i', str(release / 'ReceiverBridge.app/Contents/embedded.provisionprofile')],
+    capture_output=True, check=True).stdout)
+profile_expiry = profile['ExpirationDate'].strftime('%Y-%m-%d %H:%M:%S UTC')
 with tempfile.TemporaryDirectory(prefix='receiver-pkg-build-') as temporary:
     work = pathlib.Path(temporary)
     payload = work / 'payload'
     support = payload / 'Library/Application Support/ReceiverBridge'
-    applications = payload / 'Applications'
     support.mkdir(parents=True)
-    applications.mkdir()
     shutil.copytree(release / 'ReceiverBridge.app', support / 'ReceiverBridge.app')
-    shutil.copytree(release / 'Moonlight for 8BitDo.app', applications / 'Moonlight for 8BitDo.app')
     for name in ('Status.command', 'Uninstall.command'):
         shutil.copy2(source / name, support / name)
         (support / name).chmod(0o755)
@@ -57,27 +64,27 @@ with tempfile.TemporaryDirectory(prefix='receiver-pkg-build-') as temporary:
     component_plist.write_bytes(plistlib.dumps(components))
     component_pkg = work / 'ReceiverBridge-component.pkg'
     subprocess.run(['/usr/bin/pkgbuild', '--root', str(payload), '--component-plist', str(component_plist),
-                    '--scripts', str(scripts), '--identifier', identifier, '--version', '1.0',
+                    '--scripts', str(scripts), '--identifier', identifier, '--version', version,
                     '--install-location', '/', '--ownership', 'recommended', str(component_pkg)], check=True)
     resources = work / 'resources'
     resources.mkdir()
     (resources / 'welcome.html').write_text('''<!doctype html><html><body>
 <h1>ReceiverBridge</h1><p>8BitDo Ultimate 2.4 GHz receiver support for this Mac.</p>
-<p>Installs a silent background service with login startup, automatic USB
-reconnection, and the Moonlight for 8BitDo launcher. Input and both rumble
-motors retain the settings verified during testing.</p>
+<p>Installs a silent background service with login startup and automatic USB
+reconnection. Open Moonlight and other controller-compatible apps normally.
+Input and both rumble motors retain the settings verified during testing.</p>
 <p>Install for your user account. Quit Moonlight first.</p>
-<p>The apps are development-signed. This installer package is unsigned and
+<p>The bridge app is development-signed. This installer package is unsigned and
 is intended for local use on this provisioned Mac.</p></body></html>''')
-    (resources / 'conclusion.html').write_text('''<!doctype html><html><body>
+    (resources / 'conclusion.html').write_text(f'''<!doctype html><html><body>
 <h1>Ready to play</h1><p>The bridge runs in the background now and at login.
-No Terminal or Xcode window is required.</p><p>Open <strong>Moonlight for 8BitDo</strong>
-in your home Applications folder. You can drag it to the Dock.</p>
+No Terminal or Xcode window is required.</p><p>Open <strong>Moonlight</strong>
+or another controller-compatible app normally. No separate launcher is needed.</p>
 <p>Reconnect the receiver once and confirm input and rumble after reconnection.</p>
 <p>Status and Uninstall commands are in Library/Application Support/ReceiverBridge
-inside your home folder. The development profile expires October 26, 2027.</p></body></html>''')
+inside your home folder. This build's development profile expires {profile_expiry}.</p></body></html>''')
     distribution = ET.Element('installer-gui-script', {'minSpecVersion': '2'})
-    ET.SubElement(distribution, 'title').text = 'ReceiverBridge 1.0'
+    ET.SubElement(distribution, 'title').text = f'ReceiverBridge {version}'
     ET.SubElement(distribution, 'options', {'customize': 'never', 'require-scripts': 'true', 'hostArchitectures': 'arm64'})
     ET.SubElement(distribution, 'domains', {'enable_anywhere': 'false', 'enable_currentUserHome': 'true', 'enable_localSystem': 'false'})
     ET.SubElement(distribution, 'welcome', {'file': 'welcome.html', 'mime-type': 'text/html'})
@@ -88,9 +95,6 @@ function checkHost() {
     if (system.compareVersions(system.version.ProductVersion, '13.0') < 0) {
         my.result.type='Fatal'; my.result.message='macOS 13 or newer is required.'; return false;
     }
-    if (!system.files.fileExistsAtPath('/Applications/Moonlight.app')) {
-        my.result.type='Fatal'; my.result.message='Install Moonlight in Applications first.'; return false;
-    }
     return true;
 }
 '''
@@ -98,7 +102,7 @@ function checkHost() {
     ET.SubElement(outline, 'line', {'choice': 'bridge'})
     choice = ET.SubElement(distribution, 'choice', {'id': 'bridge', 'visible': 'false', 'title': 'ReceiverBridge'})
     ET.SubElement(choice, 'pkg-ref', {'id': identifier})
-    ET.SubElement(distribution, 'pkg-ref', {'id': identifier, 'version': '1.0', 'onConclusion': 'None'}).text = component_pkg.name
+    ET.SubElement(distribution, 'pkg-ref', {'id': identifier, 'version': version, 'onConclusion': 'None'}).text = component_pkg.name
     dist_path = work / 'Distribution.xml'
     ET.ElementTree(distribution).write(dist_path, encoding='utf-8', xml_declaration=True)
     subprocess.run(['/usr/bin/productbuild', '--distribution', str(dist_path), '--package-path', str(work),

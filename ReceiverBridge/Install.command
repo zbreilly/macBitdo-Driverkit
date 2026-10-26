@@ -3,7 +3,6 @@ set -eu
 umask 077
 package_dir=${0:A:h}
 support_dir="$HOME/Library/Application Support/ReceiverBridge"
-applications_dir="$HOME/Applications"
 agent_dir="$HOME/Library/LaunchAgents"
 log_dir="$HOME/Library/Logs/ReceiverBridge"
 agent_file="$agent_dir/com.zbreilly.ReceiverBridge.agent.plist"
@@ -16,23 +15,17 @@ fi
 if (( $(id -u) == 0 )); then
     print -u2 'Run this installer as your normal user, without sudo.'; exit 1
 fi
-for app in ReceiverBridge.app 'Moonlight for 8BitDo.app'; do
-    /usr/bin/codesign --verify --deep --strict "$package_dir/$app"
-    team=$(/usr/bin/codesign -dv "$package_dir/$app" 2>&1 | /usr/bin/sed -n 's/^TeamIdentifier=//p')
-    [[ $team == B7MRCR9852 ]] || { print -u2 "Unexpected signing team for $app"; exit 1; }
-done
-if [[ ! -d /Applications/Moonlight.app ]]; then
-    print -u2 'Install Moonlight in /Applications before installing this bridge.'; exit 1
-fi
+/usr/bin/codesign --verify --deep --strict "$package_dir/ReceiverBridge.app"
+team=$(/usr/bin/codesign -dv "$package_dir/ReceiverBridge.app" 2>&1 | /usr/bin/sed -n 's/^TeamIdentifier=//p')
+[[ -n $team && $team != 'not set' ]] || { print -u2 'The bridge needs a provisioning-backed signing identity.'; exit 1; }
 if [[ ${1:-} == --check ]]; then
-    print 'Signatures, signing team, and Moonlight location validated. No installation changes made.'; exit 0
+    print "Bridge signature validated (team $team). No installation changes made."; exit 0
 fi
 
-mkdir -p "$support_dir" "$applications_dir" "$agent_dir" "$log_dir"
+mkdir -p "$support_dir" "$agent_dir" "$log_dir"
 stage_dir=$(mktemp -d "$support_dir/.install.XXXXXX")
 trap '[[ ! -d "$stage_dir" ]] || /bin/rm -rf -- "$stage_dir"' EXIT
 /usr/bin/ditto "$package_dir/ReceiverBridge.app" "$stage_dir/ReceiverBridge.app"
-/usr/bin/ditto "$package_dir/Moonlight for 8BitDo.app" "$stage_dir/Moonlight for 8BitDo.app"
 
 # Stop this job on upgrades before moving its executable. Stop only the named
 # prototype binaries of the current user; unrelated apps and Moonlight stay open.
@@ -51,12 +44,15 @@ fi
 if [[ -e "$support_dir/ReceiverBridge.app" ]]; then
     mv "$support_dir/ReceiverBridge.app" "$support_dir/ReceiverBridge.previous-$stamp.app"
 fi
-if [[ -e "$applications_dir/Moonlight for 8BitDo.app" ]]; then
-    mv "$applications_dir/Moonlight for 8BitDo.app" "$support_dir/Moonlight-launcher.previous-$stamp.app"
+legacy_launcher="$HOME/Applications/Moonlight for 8BitDo.app"
+if [[ -e "$legacy_launcher" || -L "$legacy_launcher" ]]; then
+    legacy_trash="$HOME/.Trash/ReceiverBridge-legacy-launcher-$stamp-$$"
+    mkdir -p "$legacy_trash"
+    mv "$legacy_launcher" "$legacy_trash/"
 fi
 mv "$stage_dir/ReceiverBridge.app" "$support_dir/ReceiverBridge.app"
-mv "$stage_dir/Moonlight for 8BitDo.app" "$applications_dir/Moonlight for 8BitDo.app"
 cp "$package_dir/Uninstall.command" "$package_dir/Status.command" "$support_dir/"
+cp "$package_dir/README.md" "$support_dir/README.md"
 chmod 700 "$support_dir/Uninstall.command" "$support_dir/Status.command"
 
 # plutil receives paths as arguments, so spaces and XML characters are preserved.
@@ -83,8 +79,7 @@ if ! /bin/launchctl bootstrap "gui/$(id -u)" "$agent_file"; then
 fi
 /bin/launchctl kickstart "$job" 2>/dev/null || true
 print 'Installed. The bridge runs now and at login, without Terminal or Xcode.'
-print 'Open ~/Applications/Moonlight for 8BitDo.app when streaming.'
-print 'It uses your existing Moonlight installation with the tested input backend.'
+print 'Open Moonlight or another controller-compatible app normally.'
 print "Status: $support_dir/Status.command"
 print "Uninstall: $support_dir/Uninstall.command"
 print 'You can close this Terminal window.'

@@ -1,127 +1,126 @@
-# ReceiverBridge 1.0
+# ReceiverBridge 1.1
 
-Local macOS support for the 8BitDo Ultimate 2.4 GHz USB receiver (2DC8:3106)
-in its existing XInput mode. Input and both rumble motors have been verified
-through Moonlight by the user. No firmware changes or Bluetooth are used.
+ReceiverBridge translates the 8BitDo Ultimate 2.4 GHz receiver's XInput USB
+reports (`2DC8:3106`) into a macOS virtual Xbox controller (`045E:02FD`). It
+supports sticks, D-pad, buttons, analog triggers, L3/R3, and both body rumble
+motors. The radio remains in its existing 2.4 GHz mode.
 
-## Validated development checkpoint — October 26, 2026
+After installation, open **Moonlight normally**. The bridge runs silently at
+login; it does not launch or modify Moonlight. Apps using GameController or a
+compatible HID/SDL backend can receive the controller. Apps must implement
+controller input and rumble themselves.
 
-The user confirmed the current test build works through the ordinary Moonlight
-app. No compatibility launcher or SDL backend overrides are required for this
-build. The physical connection remains USB/2.4 GHz.
+See [BUILDING.md](BUILDING.md) for dependencies, assembly, provisioning, and
+packaging; [PKG-INSTALL.md](PKG-INSTALL.md) for the `.pkg`; and
+[INSTALL.md](INSTALL.md) for manual ZIP installation.
 
-The virtual Xbox reports use the Bluetooth wire format. macOS overrides the
-creation-time Transport property to Virtual with the developer HID entitlement,
-so the bridge applies Bluetooth metadata through IOHIDUserDeviceSetProperty
-after activation and verifies it. A default SDL observer then identified an
-Xbox One S Controller (GUID 05006d105e040000fd02000000006800) and received live
-stick input. Build, code signature, and packet/mapping/rumble self-tests passed.
+## Architecture
 
-`--sdl-probe`, `--sdl-rumble-test`, and `--sdl-motor-test` now use default SDL
-backend selection and reject inherited Xbox/MFI backend hints. Add
-`--sdl-probe-native` only for an explicit comparison with the old native backend.
+`main.m` owns USB initialization, XInput decode, virtual HID creation, input
+encoding, HID callbacks, the service loop, and diagnostics. `Rumble.h` decodes
+output report 3 and translates it to the receiver motor command. The Xcode
+project builds a background app with `LSUIElement=true`.
 
-The installer scripts and the installation instructions below still describe
-the earlier launcher-based package. They need cleanup and a newly validated
-package before distribution. Login/reconnect/sleep lifecycle testing remains
-pending; this checkpoint records the working foreground-launched test service.
+The receiver uses vendor interface `FF/5D/01`, input endpoint `0x81` and output
+endpoint `0x02`. Initialization opens configuration 1/interface 0, sends
+`01 03 02` for the player indicator, queues input, and performs the XInput
+vendor startup request. Interrupt I/O is asynchronous with
+`completionTimeout=0`; cancellation is bounded.
 
-## Install (previous package)
+The virtual controller uses the Xbox Bluetooth HID wire format: report 1 is
+17 bytes including its ID (sticks, 10-bit triggers, hat, buttons, Back);
+report 2 carries Guide; report 3 carries rumble. The receiver's two motors
+receive `00 08 00 LL RR 00 00 00`. Trigger-motor values are ignored because
+this hardware exposes only the two body motors. The tested rumble scaling
+is preserved.
 
-Quit Moonlight first. Double-click **Install.command**, or run it in Terminal.
-Run as your regular user, without sudo. It stops earlier ReceiverBridge
-prototypes, installs the signed bridge, and registers a login agent.
-After installation, close Terminal and Xcode.
+### Native Moonlight compatibility
 
-Open **Moonlight for 8BitDo** in your home Applications folder when streaming.
-You can put this launcher in the Dock. It starts your existing, unmodified
-Moonlight with the SDL native backend verified on this Mac. Launching the
-ordinary Moonlight icon may select its incompatible Xbox HIDAPI backend.
-The launcher does not change global environment variables or Moonlight files.
-If Moonlight is already running, quit it and reopen the launcher.
+The installed Moonlight's SDL2 library forwards to SDL3. SDL3 uses the HID
+transport property to select between Bluetooth Xbox reports and wired GIP
+reports. Publishing this descriptor with `Transport=Virtual` selected the
+wrong parser: discovery succeeded while input stayed zero.
 
-The bridge has no window, Dock icon, or menu bar item. It runs at login and
-waits for the receiver. USB removal releases the virtual controls and exits;
-launchd restarts the bridge after a short delay. On replug it initializes the
-receiver and publishes the controller again. A game may need a moment to
-rediscover the reconnected gamepad. The bridge does not launch Moonlight at login.
+macOS forces `Virtual` at user-device creation with the developer HID
+entitlement. The bridge therefore uses the public
+`IOHIDUserDeviceSetProperty` API after activation to apply Bluetooth transport
+metadata and verifies it. This changes the virtual device's metadata; it
+does not pair the receiver over Bluetooth. The corrected default SDL GUID was
+`05006d105e040000fd02000000006800`, named Xbox One S Controller.
 
-## Installed files
+The old Moonlight wrapper and `--moonlight-compat` option have been removed.
+Installers move an older wrapper from `~/Applications` to Trash on upgrade.
 
-- `~/Library/Application Support/ReceiverBridge/ReceiverBridge.app`
-- `~/Library/LaunchAgents/com.zbreilly.ReceiverBridge.agent.plist`
-- `~/Applications/Moonlight for 8BitDo.app`
-- `~/Library/Logs/ReceiverBridge/service.log`
+## Background operation
 
-Run **Status.command** from this package or the installed support folder to
-inspect registration and recent events. Service mode does not log individual
-buttons or axes. The log is trimmed if larger than 1 MiB on a service restart.
-The installer keeps timestamped copies of previous installed builds.
+`--service` waits for a receiver before publishing a controller and holds a
+per-user advisory instance lock. USB removal or read failure neutralizes
+controls and exits. The login agent uses KeepAlive with a three-second
+throttle to restart the bridge; receiver absence is checked once per second.
+Rumble has an output watchdog and a shutdown stop command. Service mode
+suppresses per-input logging and bounds the service log on restart.
 
-## Remove
+Only one process can own the physical receiver. Stop the installed service
+before running a foreground diagnostic; do not run competing bridge copies.
 
-Run **Uninstall.command**. It unregisters the login agent, stops the service,
-and moves installed files to Trash. Moonlight, your signing credentials, and
-controller firmware are unaffected. Logs remain available for diagnosis.
+## Diagnostics
 
-## Signing and scope
+Run the signed app's `Contents/MacOS/ReceiverBridge` executable with one of
+these options. Start from a normal local Terminal or Xcode context; virtual
+HID creation was blocked in the development automation process despite a
+valid entitlement, while the normal app launch succeeded.
 
-This build is development-signed for this Mac and the user's Apple Developer
-team, with an embedded virtual HID provisioning profile. Its current profile
-expires October 26, 2027; rebuild with a renewed profile before then.
-It is a user-session compatibility service, not a kernel extension or a
-redistributable driver. Other Macs need appropriate development provisioning.
+| Option | Purpose |
+| --- | --- |
+| `--self-test` | Protocol fixtures for decode, mapping, triggers, and rumble; no hardware required. |
+| `--virtual-test` | Create and release the virtual controller; requires valid HID provisioning. |
+| `--service` | Silent persistent operation; waits for the receiver. |
+| `--sdl-probe` | Input observer using Moonlight's default SDL backend. |
+| `--sdl-probe-native` | Explicit comparison using GameController/MFI instead of Xbox HIDAPI. |
+| `--sdl-rumble-test` | Default SDL half-second rumble request; exits after about ten seconds. |
+| `--sdl-motor-test` | Default SDL large, small, and both motor pulses with OFF commands. |
+| `--rumble-test` | Direct USB half-strength motor sequence; no virtual controller. |
+| `--usb-motor-test` | Direct USB separate motor pulses at full strength. |
 
-Background startup, USB reconnection and the new launcher require a live
-post-install check. The underlying input and rumble path was verified before
-packaging; compilation, signatures, packet/mapping checks, shell syntax, and
-installer preflight are checked during release preparation.
+The SDL diagnostics require `/Applications/Moonlight.app` and its bundled
+`libSDL2.dylib`. Normal bridge operation has no Moonlight or SDL dependency.
+Default probes reject inherited `SDL_JOYSTICK_HIDAPI_XBOX` and
+`SDL_JOYSTICK_MFI` hints. For a clean one-process test, unset them with
+`env -u SDL_JOYSTICK_HIDAPI_XBOX -u SDL_JOYSTICK_MFI` before the executable;
+do not set global hints. Add `--sdl-probe-native` to an SDL motor test only
+when deliberately comparing the native backend.
 
-## Source and rebuilding
+## Verification and limits
 
-Source is included in `Source/`. Open its Xcode project with the existing
-development account, or run `python3 Source/build_release.py` with an output
-directory that does not already exist. The scripts require only macOS system
-tools; rebuilding also requires Xcode and the configured signing identity.
+On October 26, 2026, the owner confirmed the updated bridge works through the
+ordinary Moonlight launch. A separate observer using Moonlight's default SDL
+backend recorded live stick changes with both backend hints unset. Earlier
+hardware tests verified buttons, D-pad, analog triggers, L3/R3, separate large
+and small motor channels, and streamed in-game rumble.
 
-Apple launch-agent reference:
-https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html
+Version 1.1 removes the launcher requirement from the package and ZIP
+installers. Build/signature checks, protocol fixtures, script syntax, package
+payload inspection, and source-archive checks can be performed without a real
+installation. Actual Installer execution, login with receiver present/absent,
+unplug/replug, controller sleep/power cycling, system sleep/wake, and uninstall
+still need end-to-end checks. Do not equate package inspection with those tests.
 
+Home/Guide can interact with macOS system gestures. A Moonlight-specific
+gesture override was present during development; this installer does not
+change app gesture preferences. Test its behavior under the target user's
+settings. Trigger rumble may be advertised by SDL although only the two body
+motors are implemented. Battery reporting is not implemented. Other macOS,
+SDL, controller firmware, and receiver variants have not been validated.
 
-## Development notes
+This is an Apple Development build. The current maintainer profile expires
+October 26, 2027. Other builders need their own provisioning; other Macs are
+not automatically authorized by this source repository. The `.pkg` is unsigned
+and the app is not notarized for public distribution.
 
-The physical receiver stays at 2DC8:3106. The virtual gamepad emulates the
-045E:02FD Xbox HID layout recognized by macOS. Input report 1 contains the
-sticks, 10-bit triggers, hat and buttons; report 2 carries Guide. Output
-report 3 carries the two rumble magnitudes. Rumble.h translates these to
-the receiver command `00 08 00 LL RR 00 00 00` on endpoint 0x02. Input
-uses endpoint 0x81, zero-timeout asynchronous interrupt I/O, player-indicator
-initialization `01 03 02`, then the existing XInput vendor startup request.
+## Primary references
 
-Service mode suppresses input-event diagnostics, uses a per-user advisory
-instance lock, waits for a receiver before publishing a virtual device, and
-handles removal notifications. It neutralizes controls and exits on removal
-or read failure; launchd KeepAlive restarts it with a three-second throttle.
-A one-second wait loop covers a receiver absent at startup or replug. The
-rumble output watchdog and bounded cancellation remain active. Service mode
-cannot be combined with diagnostic or auto-launch flags.
-
-Available diagnostics: `--self-test`, `--virtual-test`, `--sdl-probe`,
-`--rumble-test`, `--sdl-rumble-test`, `--sdl-motor-test`, `--usb-motor-test`.
-`--moonlight-compat` remains available for a manual foreground prototype run.
-Use the installed Moonlight launcher while the background service is active
-to avoid competing USB clients.
-
-Build the bridge with the Xcode project and existing Apple Development
-signing setup. Team B7MRCR9852; App ID com.zbreilly.ReceiverBridge; restricted
-capability com.apple.developer.hid.virtual.device. The standalone Moonlight
-launcher uses the same existing signing identity and no restricted entitlement.
-
-The user verified sticks, buttons, analog triggers, L3/R3 and both rumble
-channels locally and input/rumble in Moonlight. Home follows macOS system
-gesture policy and has a Moonlight-specific override set during prototyping.
-No changes to that policy or rumble gain were made in this packaging step.
-
-Protocol references:
-https://github.com/torvalds/linux/blob/master/drivers/input/joystick/xpad.c
-https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.hid.virtual.device
+- [Apple virtual HID entitlement](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.hid.virtual.device)
+- [Apple IOHIDUserDevice transport implementation](https://github.com/apple-oss-distributions/IOHIDFamily/blob/main/IOHIDFamily/IOHIDUserDevice.cpp)
+- [SDL 3.4.18 macOS HID transport classification](https://github.com/libsdl-org/SDL/blob/release-3.4.18/src/hidapi/mac/hid.c)
+- [SDL 3.4.18 Xbox report handling](https://github.com/libsdl-org/SDL/blob/release-3.4.18/src/joystick/hidapi/SDL_hidapi_xboxone.c)
+- [Linux xpad USB protocol implementation](https://github.com/torvalds/linux/blob/master/drivers/input/joystick/xpad.c)

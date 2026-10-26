@@ -17,7 +17,13 @@ job="gui/$(id -u)/com.zbreilly.ReceiverBridge.agent"
     print -u2 'The app payload was not installed in the expected user home.'; exit 1
 }
 /usr/bin/codesign --verify --deep --strict "$support_dir/ReceiverBridge.app"
-/usr/bin/codesign --verify --deep --strict "$target_home/Applications/Moonlight for 8BitDo.app"
+# Remove the retired wrapper on upgrades without touching ordinary Moonlight.
+legacy_launcher="$target_home/Applications/Moonlight for 8BitDo.app"
+if [[ -e "$legacy_launcher" || -L "$legacy_launcher" ]]; then
+    legacy_trash="$target_home/.Trash/ReceiverBridge-legacy-launcher-$(date +%Y%m%d-%H%M%S)-$$"
+    mkdir -p "$legacy_trash"
+    mv "$legacy_launcher" "$legacy_trash/"
+fi
 mkdir -p "$agent_dir" "$log_dir"
 stage_dir=$(mktemp -d "$agent_dir/.receiverbridge.XXXXXX")
 trap '[[ ! -d "$stage_dir" ]] || /bin/rm -rf -- "$stage_dir"' EXIT
@@ -44,4 +50,4 @@ chmod 600 "$agent_file"
 /bin/launchctl bootstrap "gui/$(id -u)" "$agent_file"
 /bin/launchctl kickstart "$job" 2>/dev/null || true
 print 'ReceiverBridge installed and registered for login startup.'
-print 'Use ~/Applications/Moonlight for 8BitDo.app when streaming.'
+print 'Open Moonlight or another controller-compatible app normally.'

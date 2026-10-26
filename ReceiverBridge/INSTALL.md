@@ -1,66 +1,42 @@
-# ReceiverBridge 1.0
+# ReceiverBridge 1.1 — ZIP installation
 
-Local macOS support for the 8BitDo Ultimate 2.4 GHz USB receiver (2DC8:3106)
-in its existing XInput mode. Input and both rumble motors have been verified
-through Moonlight by the user. No firmware changes or Bluetooth are used.
+Use this signed development build only on a Mac authorized by its provisioning
+profile. For a different Mac, rebuild with your own signing setup as described
+in `Source/BUILDING.md`. The physical receiver must be in its tested XInput
+mode (`2DC8:3106`); no firmware change or Bluetooth pairing is needed.
 
 ## Install
 
-Quit Moonlight first. Double-click **Install.command**, or run it in Terminal.
-Run as your regular user, without sudo. It stops earlier ReceiverBridge
-prototypes, installs the signed bridge, and registers a login agent.
-After installation, close Terminal and Xcode.
+1. Quit Moonlight and other controller apps.
+2. Extract the ZIP and double-click **Install.command**. Run as your regular
+   user without sudo. It verifies the app signature, stops earlier bridges,
+   installs the app, and registers a login agent.
+3. Open **ordinary Moonlight** or another controller-compatible app. No
+   separate launcher is needed. Terminal and Xcode can be closed.
 
-Open **Moonlight for 8BitDo** in your home Applications folder when streaming.
-You can put this launcher in the Dock. It starts your existing, unmodified
-Moonlight with the SDL native backend verified on this Mac. Launching the
-ordinary Moonlight icon may select its incompatible Xbox HIDAPI backend.
-The launcher does not change global environment variables or Moonlight files.
-If Moonlight is already running, quit it and reopen the launcher.
+The installer moves an older `~/Applications/Moonlight for 8BitDo.app` to
+Trash. It does not modify Moonlight, controller firmware, global SDL hints,
+or system gesture settings. Moonlight need not be installed to use the bridge.
 
-The bridge has no window, Dock icon, or menu bar item. It runs at login and
-waits for the receiver. USB removal releases the virtual controls and exits;
-launchd restarts the bridge after a short delay. On replug it initializes the
-receiver and publishes the controller again. A game may need a moment to
-rediscover the reconnected gamepad. The bridge does not launch Moonlight at login.
+## Installed files and removal
 
-## Installed files
+The app, Status.command, Uninstall.command, and these instructions are under
+`~/Library/Application Support/ReceiverBridge`. The login agent is
+`~/Library/LaunchAgents/com.zbreilly.ReceiverBridge.agent.plist`; logs are in
+`~/Library/Logs/ReceiverBridge/service.log`.
 
-- `~/Library/Application Support/ReceiverBridge/ReceiverBridge.app`
-- `~/Library/LaunchAgents/com.zbreilly.ReceiverBridge.agent.plist`
-- `~/Applications/Moonlight for 8BitDo.app`
-- `~/Library/Logs/ReceiverBridge/service.log`
+Run **Status.command** to inspect startup and logs. Run **Uninstall.command**
+to stop the agent, remove startup, and move installed files to Trash. Logs
+remain. Previous manual-install builds are kept as timestamped backups in
+the support folder until removal.
 
-Run **Status.command** from this package or the installed support folder to
-inspect registration and recent events. Service mode does not log individual
-buttons or axes. The log is trimmed if larger than 1 MiB on a service restart.
-The installer keeps timestamped copies of previous installed builds.
+The bridge waits while the receiver is absent. After installation, test
+input/rumble, receiver unplug/replug, controller sleep/power cycling, login,
+and system sleep/wake. The revised installed lifecycle is not yet verified.
 
-## Remove
+## Signing
 
-Run **Uninstall.command**. It unregisters the login agent, stops the service,
-and moves installed files to Trash. Moonlight, your signing credentials, and
-controller firmware are unaffected. Logs remain available for diagnosis.
-
-## Signing and scope
-
-This build is development-signed for this Mac and the user's Apple Developer
-team, with an embedded virtual HID provisioning profile. Its current profile
-expires October 26, 2027; rebuild with a renewed profile before then.
-It is a user-session compatibility service, not a kernel extension or a
-redistributable driver. Other Macs need appropriate development provisioning.
-
-Background startup, USB reconnection and the new launcher require a live
-post-install check. The underlying input and rumble path was verified before
-packaging; compilation, signatures, packet/mapping checks, shell syntax, and
-installer preflight are checked during release preparation.
-
-## Source and rebuilding
-
-Source is included in `Source/`. Open its Xcode project with the existing
-development account, or run `python3 Source/build_release.py` with an output
-directory that does not already exist. The scripts require only macOS system
-tools; rebuilding also requires Xcode and the configured signing identity.
-
-Apple launch-agent reference:
-https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html
+The app is development-signed, not a notarized public distribution. The
+maintainer's current profile expires October 26, 2027; another builder's
+profile may differ. Rebuild before your profile expires. Signatures and
+protocol self-tests do not establish that an unregistered Mac can run it.

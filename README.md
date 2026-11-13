@@ -134,3 +134,7 @@ agent is installed, activating the driver stops it and saves its launch agent;
 **Restore Old Bridge** in the activation app removes the driver and puts the
 bridge back. The driver's tests use the bridge source as their reference, so it
 stays in the repository.
+
+## License
+
+[MIT](LICENSE)

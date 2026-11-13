@@ -1,0 +1,336 @@
+// !$*UTF8*$!
+{
+	"archiveVersion" = 1;
+	"classes" = {
+	};
+	"objectVersion" = 56;
+	"objects" = {
+		"7BF96AB4BBF32C7CCEBF4D49" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.cpp.cpp";
+			"path" = "Driver/UltimateReceiverDevice.cpp";
+			"sourceTree" = "<group>";
+		};
+		"381A25A1D84F14D8BB241D4C" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.iig";
+			"path" = "Driver/UltimateReceiverDevice.iig";
+			"sourceTree" = "<group>";
+		};
+		"E6BE4EB74D7592C720563F13" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.cpp.cpp";
+			"path" = "Driver/UltimateReceiverHID.cpp";
+			"sourceTree" = "<group>";
+		};
+		"44FADEB83BA5C7656EADE914" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.iig";
+			"path" = "Driver/UltimateReceiverHID.iig";
+			"sourceTree" = "<group>";
+		};
+		"6E9B4AF64B7AEED1DECFA7A9" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.c.h";
+			"path" = "Driver/ReceiverProtocol.h";
+			"sourceTree" = "<group>";
+		};
+		"EB3F8080414EEBDA08500296" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.c.objc";
+			"path" = "Host/main.m";
+			"sourceTree" = "<group>";
+		};
+		"4FD7D03BBDB6C1C38BD68091" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text.plist.xml";
+			"path" = "Driver/Info.plist";
+			"sourceTree" = "<group>";
+		};
+		"8155DBE0FE0FF9BF00EE9FAD" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text.plist.xml";
+			"path" = "Driver/Driver.entitlements";
+			"sourceTree" = "<group>";
+		};
+		"984D8D55017B897C9A0550AC" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text.plist.xml";
+			"path" = "Host/Info.plist";
+			"sourceTree" = "<group>";
+		};
+		"196DFA30812C45617D98D978" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text.plist.xml";
+			"path" = "Host/Host.entitlements";
+			"sourceTree" = "<group>";
+		};
+		"985AA2835A9BCB542B9EC5C1" = {
+			"isa" = "PBXFileReference";
+			"explicitFileType" = "wrapper.driver-extension";
+			"path" = "com.zbreilly.macBitdo.DriverHost.Receiver.dext";
+			"sourceTree" = "BUILT_PRODUCTS_DIR";
+			"includeInIndex" = 0;
+		};
+		"6351E899287421FC22BE9D9F" = {
+			"isa" = "PBXFileReference";
+			"explicitFileType" = "wrapper.application";
+			"path" = "macBitdo Driver.app";
+			"sourceTree" = "BUILT_PRODUCTS_DIR";
+			"includeInIndex" = 0;
+		};
+		"FBDC4F23F93125BBEEAE800C" = {
+			"isa" = "PBXGroup";
+			"children" = ( "985AA2835A9BCB542B9EC5C1", "6351E899287421FC22BE9D9F" );
+			"name" = "Products";
+			"sourceTree" = "<group>";
+		};
+		"B28B7AF69320201D1CF206EB" = {
+			"isa" = "PBXGroup";
+			"children" = ( "7BF96AB4BBF32C7CCEBF4D49", "381A25A1D84F14D8BB241D4C", "E6BE4EB74D7592C720563F13", "44FADEB83BA5C7656EADE914", "6E9B4AF64B7AEED1DECFA7A9", "EB3F8080414EEBDA08500296", "4FD7D03BBDB6C1C38BD68091", "8155DBE0FE0FF9BF00EE9FAD", "984D8D55017B897C9A0550AC", "196DFA30812C45617D98D978", "FBDC4F23F93125BBEEAE800C" );
+			"sourceTree" = "<group>";
+		};
+		"54BED5EC5834B7C0E47C5803" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Debug";
+			"buildSettings" = {
+				"DEVELOPMENT_TEAM" = "B7MRCR9852";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"CODE_SIGN_IDENTITY" = "Apple Development";
+				"GCC_TREAT_WARNINGS_AS_ERRORS" = "YES";
+				"CLANG_ENABLE_MODULES" = "YES";
+				"ENABLE_USER_SCRIPT_SANDBOXING" = "YES";
+				"SDKROOT" = "driverkit";
+				"SUPPORTED_PLATFORMS" = "driverkit";
+				"DRIVERKIT_DEPLOYMENT_TARGET" = "23.0";
+				"ARCHS" = "arm64e";
+				"PRODUCT_NAME" = "$(PRODUCT_BUNDLE_IDENTIFIER)";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.zbreilly.macBitdo.DriverHost.Receiver";
+				"INFOPLIST_FILE" = "Driver/Info.plist";
+				"CODE_SIGN_ENTITLEMENTS" = "Driver/Driver.entitlements";
+				"CLANG_CXX_LANGUAGE_STANDARD" = "gnu++17";
+				"CLANG_CXX_LIBRARY" = "libc++";
+				"GCC_ENABLE_CPP_EXCEPTIONS" = "NO";
+				"GCC_ENABLE_CPP_RTTI" = "NO";
+				"HEADER_SEARCH_PATHS" = ( "$(SRCROOT)/Driver", "$(DERIVED_FILE_DIR)" );
+				"OTHER_LDFLAGS" = ( "-framework", "DriverKit", "-framework", "USBDriverKit", "-framework", "HIDDriverKit" );
+				"SKIP_INSTALL" = "YES";
+				"GCC_OPTIMIZATION_LEVEL" = "0";
+			};
+		};
+		"783CC7E97653472D7A77B800" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Release";
+			"buildSettings" = {
+				"DEVELOPMENT_TEAM" = "B7MRCR9852";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"CODE_SIGN_IDENTITY" = "Apple Development";
+				"GCC_TREAT_WARNINGS_AS_ERRORS" = "YES";
+				"CLANG_ENABLE_MODULES" = "YES";
+				"ENABLE_USER_SCRIPT_SANDBOXING" = "YES";
+				"SDKROOT" = "driverkit";
+				"SUPPORTED_PLATFORMS" = "driverkit";
+				"DRIVERKIT_DEPLOYMENT_TARGET" = "23.0";
+				"ARCHS" = "arm64e";
+				"PRODUCT_NAME" = "$(PRODUCT_BUNDLE_IDENTIFIER)";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.zbreilly.macBitdo.DriverHost.Receiver";
+				"INFOPLIST_FILE" = "Driver/Info.plist";
+				"CODE_SIGN_ENTITLEMENTS" = "Driver/Driver.entitlements";
+				"CLANG_CXX_LANGUAGE_STANDARD" = "gnu++17";
+				"CLANG_CXX_LIBRARY" = "libc++";
+				"GCC_ENABLE_CPP_EXCEPTIONS" = "NO";
+				"GCC_ENABLE_CPP_RTTI" = "NO";
+				"HEADER_SEARCH_PATHS" = ( "$(SRCROOT)/Driver", "$(DERIVED_FILE_DIR)" );
+				"OTHER_LDFLAGS" = ( "-framework", "DriverKit", "-framework", "USBDriverKit", "-framework", "HIDDriverKit" );
+				"SKIP_INSTALL" = "YES";
+				"GCC_OPTIMIZATION_LEVEL" = "s";
+			};
+		};
+		"97A18182236DAA264576EC52" = {
+			"isa" = "XCConfigurationList";
+			"buildConfigurations" = ( "54BED5EC5834B7C0E47C5803", "783CC7E97653472D7A77B800" );
+			"defaultConfigurationIsVisible" = 0;
+			"defaultConfigurationName" = "Debug";
+		};
+		"8C32DA0373BEBDEC9822BA69" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "7BF96AB4BBF32C7CCEBF4D49";
+		};
+		"07A3C549FF4D9BDF037F51DD" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "381A25A1D84F14D8BB241D4C";
+		};
+		"2D6E45A40BA5326BBB2DB2A1" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "E6BE4EB74D7592C720563F13";
+		};
+		"D53E47BA8EB20BD2FEE7A64C" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "44FADEB83BA5C7656EADE914";
+		};
+		"B7DE99826C5A6AFC2F5C1E7B" = {
+			"isa" = "PBXSourcesBuildPhase";
+			"buildActionMask" = 2147483647;
+			"files" = ( "8C32DA0373BEBDEC9822BA69", "07A3C549FF4D9BDF037F51DD", "2D6E45A40BA5326BBB2DB2A1", "D53E47BA8EB20BD2FEE7A64C" );
+			"runOnlyForDeploymentPostprocessing" = 0;
+		};
+		"FDDA0C46F953C1A45BDC5208" = {
+			"isa" = "PBXNativeTarget";
+			"name" = "UltimateReceiverDriver";
+			"productName" = "UltimateReceiverDriver";
+			"productReference" = "985AA2835A9BCB542B9EC5C1";
+			"productType" = "com.apple.product-type.driver-extension";
+			"buildConfigurationList" = "97A18182236DAA264576EC52";
+			"buildPhases" = ( "B7DE99826C5A6AFC2F5C1E7B" );
+			"buildRules" = (  );
+			"dependencies" = (  );
+		};
+		"265BC4FD28C528304F1AC67C" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "985AA2835A9BCB542B9EC5C1";
+			"settings" = {
+				"ATTRIBUTES" = ( "RemoveHeadersOnCopy" );
+			};
+		};
+		"CFFF27C96089B93150F3553B" = {
+			"isa" = "PBXCopyFilesBuildPhase";
+			"buildActionMask" = 2147483647;
+			"dstPath" = "$(CONTENTS_FOLDER_PATH)/Library/SystemExtensions";
+			"dstSubfolderSpec" = 16;
+			"files" = ( "265BC4FD28C528304F1AC67C" );
+			"name" = "Embed DriverKit Extension";
+			"runOnlyForDeploymentPostprocessing" = 0;
+		};
+		"D799BAE6088A90139B415FCC" = {
+			"isa" = "PBXContainerItemProxy";
+			"containerPortal" = "98F54143AB4E86B28C3AFEE0";
+			"proxyType" = 1;
+			"remoteGlobalIDString" = "FDDA0C46F953C1A45BDC5208";
+			"remoteInfo" = "UltimateReceiverDriver";
+		};
+		"DE58E2B17C19600779694943" = {
+			"isa" = "PBXTargetDependency";
+			"target" = "FDDA0C46F953C1A45BDC5208";
+			"targetProxy" = "D799BAE6088A90139B415FCC";
+		};
+		"3A9446CE9A79CAA646054490" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Debug";
+			"buildSettings" = {
+				"DEVELOPMENT_TEAM" = "B7MRCR9852";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"CODE_SIGN_IDENTITY" = "Apple Development";
+				"GCC_TREAT_WARNINGS_AS_ERRORS" = "YES";
+				"CLANG_ENABLE_MODULES" = "YES";
+				"ENABLE_USER_SCRIPT_SANDBOXING" = "YES";
+				"SDKROOT" = "macosx";
+				"SUPPORTED_PLATFORMS" = "macosx";
+				"MACOSX_DEPLOYMENT_TARGET" = "14.0";
+				"ARCHS" = "arm64";
+				"PRODUCT_NAME" = "macBitdo Driver";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.zbreilly.macBitdo.DriverHost";
+				"INFOPLIST_FILE" = "Host/Info.plist";
+				"CODE_SIGN_ENTITLEMENTS" = "Host/Host.entitlements";
+				"CLANG_ENABLE_OBJC_ARC" = "YES";
+				"OTHER_LDFLAGS" = ( "-framework", "Foundation", "-framework", "AppKit", "-framework", "SystemExtensions" );
+				"ENABLE_HARDENED_RUNTIME" = "YES";
+				"GCC_OPTIMIZATION_LEVEL" = "0";
+			};
+		};
+		"8818FD4C11583A342F6130C6" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Release";
+			"buildSettings" = {
+				"DEVELOPMENT_TEAM" = "B7MRCR9852";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"CODE_SIGN_IDENTITY" = "Apple Development";
+				"GCC_TREAT_WARNINGS_AS_ERRORS" = "YES";
+				"CLANG_ENABLE_MODULES" = "YES";
+				"ENABLE_USER_SCRIPT_SANDBOXING" = "YES";
+				"SDKROOT" = "macosx";
+				"SUPPORTED_PLATFORMS" = "macosx";
+				"MACOSX_DEPLOYMENT_TARGET" = "14.0";
+				"ARCHS" = "arm64";
+				"PRODUCT_NAME" = "macBitdo Driver";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.zbreilly.macBitdo.DriverHost";
+				"INFOPLIST_FILE" = "Host/Info.plist";
+				"CODE_SIGN_ENTITLEMENTS" = "Host/Host.entitlements";
+				"CLANG_ENABLE_OBJC_ARC" = "YES";
+				"OTHER_LDFLAGS" = ( "-framework", "Foundation", "-framework", "AppKit", "-framework", "SystemExtensions" );
+				"ENABLE_HARDENED_RUNTIME" = "YES";
+				"GCC_OPTIMIZATION_LEVEL" = "s";
+			};
+		};
+		"807D99E5E7D7A556C935D6B6" = {
+			"isa" = "XCConfigurationList";
+			"buildConfigurations" = ( "3A9446CE9A79CAA646054490", "8818FD4C11583A342F6130C6" );
+			"defaultConfigurationIsVisible" = 0;
+			"defaultConfigurationName" = "Debug";
+		};
+		"E5985E3A96221EA9D77C2917" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "EB3F8080414EEBDA08500296";
+		};
+		"7760C3852865093DDA23977B" = {
+			"isa" = "PBXSourcesBuildPhase";
+			"buildActionMask" = 2147483647;
+			"files" = ( "E5985E3A96221EA9D77C2917" );
+			"runOnlyForDeploymentPostprocessing" = 0;
+		};
+		"86DD1CF45142E904CB2E99C2" = {
+			"isa" = "PBXNativeTarget";
+			"name" = "macBitdo Driver";
+			"productName" = "macBitdo Driver";
+			"productReference" = "6351E899287421FC22BE9D9F";
+			"productType" = "com.apple.product-type.application";
+			"buildConfigurationList" = "807D99E5E7D7A556C935D6B6";
+			"buildPhases" = ( "7760C3852865093DDA23977B", "CFFF27C96089B93150F3553B" );
+			"buildRules" = (  );
+			"dependencies" = ( "DE58E2B17C19600779694943" );
+		};
+		"89E1FD6268CC0F221A2BE178" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Debug";
+			"buildSettings" = {
+				"GCC_OPTIMIZATION_LEVEL" = "0";
+			};
+		};
+		"E6DE6C99132752C914FEF632" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Release";
+			"buildSettings" = {
+				"GCC_OPTIMIZATION_LEVEL" = "s";
+			};
+		};
+		"862894B703A6DEDF96A9DD6C" = {
+			"isa" = "XCConfigurationList";
+			"buildConfigurations" = ( "89E1FD6268CC0F221A2BE178", "E6DE6C99132752C914FEF632" );
+			"defaultConfigurationIsVisible" = 0;
+			"defaultConfigurationName" = "Debug";
+		};
+		"98F54143AB4E86B28C3AFEE0" = {
+			"isa" = "PBXProject";
+			"attributes" = {
+				"LastUpgradeCheck" = "2700";
+				"TargetAttributes" = {
+					"FDDA0C46F953C1A45BDC5208" = {
+						"DevelopmentTeam" = "B7MRCR9852";
+					};
+					"86DD1CF45142E904CB2E99C2" = {
+						"DevelopmentTeam" = "B7MRCR9852";
+					};
+				};
+			};
+			"buildConfigurationList" = "862894B703A6DEDF96A9DD6C";
+			"compatibilityVersion" = "Xcode 14.0";
+			"developmentRegion" = "en";
+			"knownRegions" = ( "en", "Base" );
+			"mainGroup" = "B28B7AF69320201D1CF206EB";
+			"productRefGroup" = "FBDC4F23F93125BBEEAE800C";
+			"projectDirPath" = "";
+			"projectRoot" = "";
+			"targets" = ( "86DD1CF45142E904CB2E99C2", "FDDA0C46F953C1A45BDC5208" );
+		};
+	};
+	"rootObject" = "98F54143AB4E86B28C3AFEE0";
+}

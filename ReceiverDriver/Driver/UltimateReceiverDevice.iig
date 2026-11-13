@@ -1,0 +1,9 @@
+#include <DriverKit/IOService.iig>
+
+// Device-level initialization is required before vendor-specific interfaces
+// can match. The HID driver below owns interface 0 and all controller traffic.
+class UltimateReceiverDevice : public IOService {
+public:
+    virtual kern_return_t Start(IOService *provider) override;
+    virtual kern_return_t Stop(IOService *provider) override;
+};

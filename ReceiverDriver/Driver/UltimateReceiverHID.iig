@@ -1,0 +1,35 @@
+#include <HIDDriverKit/IOUserHIDDevice.iig>
+#include <USBDriverKit/IOUSBHostPipe.iig>
+#include <DriverKit/IOTimerDispatchSource.iig>
+
+struct UltimateReceiverHID_IVars;
+
+class UltimateReceiverHID : public IOUserHIDDevice {
+public:
+    virtual bool init() override;
+    virtual void free() override;
+    virtual kern_return_t Start(IOService *provider) override;
+    virtual kern_return_t Stop(IOService *provider) override;
+    virtual kern_return_t SetPowerState(uint32_t powerFlags) override;
+    virtual bool handleStart(IOService *provider) override;
+    virtual OSDictionary *newDeviceDescription() override;
+    virtual OSData *newReportDescriptor() override;
+    virtual kern_return_t getReport(IOMemoryDescriptor *report,IOHIDReportType type,
+        IOOptionBits options,uint32_t completionTimeout,OSAction *action) override;
+    virtual kern_return_t setReport(IOMemoryDescriptor *report,IOHIDReportType type,
+        IOOptionBits options,uint32_t completionTimeout,OSAction *action) override;
+
+    virtual void InputComplete(OSAction *action,IOReturn status,uint32_t actualByteCount,
+        uint64_t completionTimestamp) TYPE(IOUSBHostPipe::CompleteAsyncIO);
+    virtual void OutputComplete(OSAction *action,IOReturn status,uint32_t actualByteCount,
+        uint64_t completionTimestamp) TYPE(IOUSBHostPipe::CompleteAsyncIO);
+    virtual void Tick(OSAction *action,uint64_t time) TYPE(IOTimerDispatchSource::TimerOccurred);
+private:
+    UltimateReceiverHID_IVars *ivars;
+    void QueueInput() LOCALONLY;
+    void BeginReceiverInput() LOCALONLY;
+    void ServiceOutput() LOCALONLY;
+    void PublishNeutral() LOCALONLY;
+    void FinishQuiesceIfReady() LOCALONLY;
+    void ReleaseTransport() LOCALONLY;
+};
